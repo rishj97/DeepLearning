@@ -15,6 +15,12 @@ from keras.utils import normalize, np_utils
 
 DATA = 'data4students.mat'
 
+activation_fns = ['relu', 'relu', 'relu']
+layers = ['900', '300', '100']
+learning_rate = '0.01'
+decay_lr = '0.0'
+momentum = '0.5'
+nesterov = 'True'
 
 def main():
     data = spio.loadmat(DATA, squeeze_me=True)
@@ -35,16 +41,10 @@ def main():
     x_val = np.array(x_val)
     y_val = np.array(y_val)
 
-    normalize_input(x_train)
-    normalize_input(x_val)
-    normalize_input(x_test)
+    # normalize_input(x_train)
+    # normalize_input(x_val)
+    # normalize_input(x_test)
 
-    activation_fns = ['relu', 'relu', 'relu']
-    layers = ['900', '300', '100']
-    learning_rate = '0.01'
-    decay_lr = '0.0'
-    momentum = '0.5'
-    nesterov = 'True'
     print(activation_fns)
     print(layers)
     print('learning rate: ' + learning_rate)
@@ -69,11 +69,13 @@ def main():
     early_stop_callback = keras.callbacks.EarlyStopping(monitor='val_acc',
                             min_delta=0.01, patience=10, verbose=1, mode='max')
 
+    learning_rate_scheduler = keras.callbacks.LearningRateScheduler(decay_scaling_factor, verbose=0)
+
     log_dir = "./Logs/" + str.join('_', activation_fns + layers + ['lr', learning_rate, 'dr', decay_lr, 'm', momentum])
     tensorboard = TensorBoard(log_dir=log_dir, histogram_freq=0,
                               write_graph=True, write_images=True)
     model.fit(x_train, y_train, epochs=80, batch_size=128,
-    validation_data=(x_val, y_val), callbacks=[tensorboard, early_stop_callback])
+    validation_data=(x_val, y_val), callbacks=[tensorboard, early_stop_callback, learning_rate_scheduler])
 
     # show the accuracy on the testing set
     print("[INFO] evaluating on testing set...")
@@ -91,6 +93,18 @@ def normalize_input(x):
                 x[i][j] = (x[i][j] - avg) / avg
     np.transpose(x)
     return x
+
+def decay_after_constant(epochs):
+    denominator = max(epochs,10)
+    return float(learning_rate)*10/denominator
+
+def decay_scaling_factor(epochs):
+    return float(learning_rate) * (0.99 ** epochs)
+
+def decay_constant(epochs):
+    denominator = 1 + (epochs/10)
+    return float(learning_rate) / denominator
+
 
 if __name__ == "__main__":
     main()
