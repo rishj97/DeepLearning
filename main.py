@@ -1,9 +1,3 @@
-'''Train a simple deep CNN on the CIFAR10 small images dataset.
-
-It gets to 75% validation accuracy in 25 epochs, and 79% after 50 epochs.
-(it's still underfitting at that point, though).
-'''
-
 from __future__ import print_function
 
 import argparse
@@ -12,6 +6,7 @@ import sys
 
 import numpy as np
 import scipy.io as spio
+import keras
 from keras.layers import Activation, BatchNormalization, Dense, Dropout
 from keras.callbacks import TensorBoard
 from keras.models import Sequential
@@ -33,20 +28,16 @@ def main():
     x_test = data['datasetInputs'][2]
     y_test = data['datasetTargets'][2]
 
-    x_train = np.array(x_train) /255.0
+    x_train = np.array(x_train)
     y_train = np.array(y_train)
-    x_test = np.array(x_test) /255.0
+    x_test = np.array(x_test)
     y_test = np.array(y_test)
-    x_val = np.array(x_val) /255.0
+    x_val = np.array(x_val)
     y_val = np.array(y_val)
-    #
-    # normalize_input(x_train)
-    # normalize_input(x_val)
-    # normalize_input(x_test)
 
-    x_train = normalize(x_train, axis=1, order=2)
-    x_val = normalize(x_val, axis=1, order=2)
-    x_test = normalize(x_test, axis=1, order=2)
+    normalize_input(x_train)
+    normalize_input(x_val)
+    normalize_input(x_test)
 
     model = Sequential()
 
@@ -67,8 +58,8 @@ def main():
     log_dir = "./Logs/" + log_dir_name
     tensorboard = TensorBoard(log_dir=log_dir, histogram_freq=0,
                               write_graph=True, write_images=True)
-    early_stop_callback = keras.callbacks.EarlyStopping(monitor='val_acc', min_delta=0.05, patience=5, verbose=1, mode='max')
-    model.fit(x_train, y_train, epochs=40, batch_size=128,
+    early_stop_callback = keras.callbacks.EarlyStopping(monitor='val_acc', min_delta=0.01, patience=5, verbose=1, mode='max')
+    model.fit(x_train, y_train, epochs=80, batch_size=128,
     validation_data=(x_val, y_val), callbacks=[tensorboard, early_stop_callback])
 
     # show the accuracy on the testing set
@@ -87,7 +78,6 @@ def normalize_input(x):
                 x[i][j] = (x[i][j] - avg) / avg
     np.transpose(x)
     return x
-
 
 if __name__ == "__main__":
     main()
