@@ -39,26 +39,28 @@ def main():
     normalize_input(x_val)
     normalize_input(x_test)
 
+    activation_fns = ['relu', 'relu']
+    layers = ['1500', '1000']
+
     model = Sequential()
 
-    model.add(Dense(700, input_dim=900, activation="relu"))
-    model.add(Dense(500, activation="relu"))
-    model.add(Dense(250, activation="relu"))
-    model.add(Dense(150, activation="relu"))
-    model.add(Dense(100, activation="relu"))
-    model.add(Dense(50, activation="relu"))
+    model.add(Dense(int(layers[0]), input_dim=900, activation=activation_fns[0]))
+    for i in range(1, len(layers)):
+        model.add(Dense(int(layers[i]), activation=activation_fns[i]))
     model.add(Dense(7, activation="softmax"))
-
 
     print("[INFO] compiling model...")
     sgd = SGD(lr=0.01, momentum=0.5)
+
     model.compile(loss="categorical_crossentropy",
-    optimizer=sgd, metrics=["accuracy"])
-    log_dir_name = sys.argv[1]
-    log_dir = "./Logs/" + log_dir_name
+                            optimizer=sgd, metrics=["accuracy"])
+
+    early_stop_callback = keras.callbacks.EarlyStopping(monitor='val_acc',
+                            min_delta=0.01, patience=10, verbose=1, mode='max')
+
+    log_dir = "./Logs/" + str.join('_', activation_fns + layers)
     tensorboard = TensorBoard(log_dir=log_dir, histogram_freq=0,
                               write_graph=True, write_images=True)
-    early_stop_callback = keras.callbacks.EarlyStopping(monitor='val_acc', min_delta=0.01, patience=5, verbose=1, mode='max')
     model.fit(x_train, y_train, epochs=80, batch_size=128,
     validation_data=(x_val, y_val), callbacks=[tensorboard, early_stop_callback])
 
