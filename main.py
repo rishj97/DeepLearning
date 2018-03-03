@@ -8,12 +8,12 @@ from __future__ import print_function
 
 import argparse
 import os
+import sys
 
 import numpy as np
-# import cv2
 import scipy.io as spio
-# from imutils import paths
 from keras.layers import Activation, BatchNormalization, Dense, Dropout
+from keras.callbacks import TensorBoard
 from keras.models import Sequential
 from keras.optimizers import SGD
 from keras.utils import normalize, np_utils
@@ -43,14 +43,8 @@ def main():
     normalize_input(x_train)
     normalize_input(x_val)
     normalize_input(x_test)
-    # print(np.average(x_train[0]))
-    # print(np.max(x_train[0]))
-    # print(np.min(x_train[0]))
+
     # x_train = normalize(x_train, axis=1, order=5)
-    # print(np.average(x_train[0]))
-    # print(np.max(x_train[0]))
-    # print(np.min(x_train[0]))
-    #
     # x_val = normalize(x_val, axis=1, order=5)
     # x_test = normalize(x_test, axis=1, order=5)
 
@@ -63,15 +57,20 @@ def main():
     model.add(Dense(100, activation="relu"))
     model.add(Dense(50, activation="relu"))
 
-    # model.add(Dense(250, activation="relu"))
+    model.add(Dense(250, activation="relu"))
     model.add(Dense(7, activation="softmax"))
+
 
     print("[INFO] compiling model...")
     sgd = SGD(lr=0.01, momentum=0.5)
     model.compile(loss="categorical_crossentropy",
     optimizer=sgd, metrics=["accuracy"])
+    log_dir_num = sys.argv[1]
+    log_dir = "./Logs/logs" + log_dir_num
+    tensorboard = TensorBoard(log_dir=log_dir, histogram_freq=0,
+                              write_graph=True, write_images=True)
     model.fit(x_train, y_train, epochs=40, batch_size=128,
-    validation_data=(x_val, y_val))
+    validation_data=(x_val, y_val), callbacks=[tensorboard])
 
     # show the accuracy on the testing set
     print("[INFO] evaluating on testing set...")
