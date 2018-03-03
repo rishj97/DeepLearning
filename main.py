@@ -33,20 +33,20 @@ def main():
     x_test = data['datasetInputs'][2]
     y_test = data['datasetTargets'][2]
 
-    x_train = np.array(x_train) / 255.0
+    x_train = np.array(x_train) /255.0
     y_train = np.array(y_train)
-    x_test = np.array(x_test) / 255.0
+    x_test = np.array(x_test) /255.0
     y_test = np.array(y_test)
-    x_val = np.array(x_val) / 255.0
+    x_val = np.array(x_val) /255.0
     y_val = np.array(y_val)
+    #
+    # normalize_input(x_train)
+    # normalize_input(x_val)
+    # normalize_input(x_test)
 
-    normalize_input(x_train)
-    normalize_input(x_val)
-    normalize_input(x_test)
-
-    # x_train = normalize(x_train, axis=1, order=5)
-    # x_val = normalize(x_val, axis=1, order=5)
-    # x_test = normalize(x_test, axis=1, order=5)
+    x_train = normalize(x_train, axis=1, order=2)
+    x_val = normalize(x_val, axis=1, order=2)
+    x_test = normalize(x_test, axis=1, order=2)
 
     model = Sequential()
 
@@ -56,8 +56,6 @@ def main():
     model.add(Dense(150, activation="relu"))
     model.add(Dense(100, activation="relu"))
     model.add(Dense(50, activation="relu"))
-
-    model.add(Dense(250, activation="relu"))
     model.add(Dense(7, activation="softmax"))
 
 
@@ -65,12 +63,13 @@ def main():
     sgd = SGD(lr=0.01, momentum=0.5)
     model.compile(loss="categorical_crossentropy",
     optimizer=sgd, metrics=["accuracy"])
-    log_dir_num = sys.argv[1]
-    log_dir = "./Logs/logs" + log_dir_num
+    log_dir_name = sys.argv[1]
+    log_dir = "./Logs/" + log_dir_name
     tensorboard = TensorBoard(log_dir=log_dir, histogram_freq=0,
                               write_graph=True, write_images=True)
+    early_stop_callback = keras.callbacks.EarlyStopping(monitor='val_acc', min_delta=0.05, patience=5, verbose=1, mode='max')
     model.fit(x_train, y_train, epochs=40, batch_size=128,
-    validation_data=(x_val, y_val), callbacks=[tensorboard])
+    validation_data=(x_val, y_val), callbacks=[tensorboard, early_stop_callback])
 
     # show the accuracy on the testing set
     print("[INFO] evaluating on testing set...")
