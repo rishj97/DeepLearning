@@ -23,16 +23,17 @@ LOG_DIR = './Logs/'
 activation_fns = ['relu', 'relu', 'relu']
 
 layers = [900, 300, 100]
+dropouts = [0.0, 0.1, 0.0]
 
 learning_rate = get_learning_rate()
 momentum = 0.5
 decay_lr = 0.0
 nesterov = True
 early_stop_min_delta = 0.01
-patience = 10
+patience = 20
 
 lr_param = get_lr_param()
-lr_scheduler_fn = decay_after_constant
+lr_scheduler_fn = decay_scaling_factor
 callbacks = []
 tensorboard = True
 normalize_imgs = True
@@ -65,8 +66,9 @@ def main():
     model = Sequential()
 
     model.add(Dense(layers[0], input_dim=900, activation=activation_fns[0]))
+    model.add(Dropout(dropouts[0]))
     for i in range(1, len(layers)):
-        # model.add(Dropout(0.5))
+        model.add(Dropout(dropouts[i]))
         model.add(Dense(layers[i], activation=activation_fns[i]))
     model.add(Dense(7, activation='softmax'))
 
@@ -142,6 +144,7 @@ def init_log_dir(log_dir):
     log_dir = append_params_to_log_dir(log_dir, ['nest', nesterov])
     log_dir = append_params_to_log_dir(log_dir, ['patience', patience])
     log_dir = append_params_to_log_dir(log_dir, ['lr_param', lr_param])
+    log_dir = append_params_to_log_dir(log_dir, ['dropouts',] + dropouts)
     return log_dir
 
 def append_to_callbacks(callback):
