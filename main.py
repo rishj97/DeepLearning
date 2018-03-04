@@ -21,7 +21,6 @@ learning_rate = '0.01'
 decay_lr = '0.0'
 momentum = '0.5'
 nesterov = 'True'
-
 def main():
     data = spio.loadmat(DATA, squeeze_me=True)
 
@@ -41,9 +40,11 @@ def main():
     x_val = np.array(x_val)
     y_val = np.array(y_val)
 
-    # normalize_input(x_train)
-    # normalize_input(x_val)
-    # normalize_input(x_test)
+    normalize_input(x_train)
+    normalize_input(x_val)
+    normalize_input(x_test)
+
+    lr_method = decay_constant
 
     print(activation_fns)
     print(layers)
@@ -68,10 +69,10 @@ def main():
 
     early_stop_callback = keras.callbacks.EarlyStopping(monitor='val_acc',
                             min_delta=0.01, patience=10, verbose=1, mode='max')
+    if lr_method:
+        learning_rate_scheduler = keras.callbacks.LearningRateScheduler(lr_method, verbose=0)
 
-    learning_rate_scheduler = keras.callbacks.LearningRateScheduler(decay_scaling_factor, verbose=0)
-
-    log_dir = "./Logs/" + str.join('_', activation_fns + layers + ['lr', learning_rate, 'dr', decay_lr, 'm', momentum])
+    log_dir = "./Logs/" + str.join('_', activation_fns + layers + ['lr', learning_rate, 'dr', decay_lr, 'm', momentum, 'lr', lr_method.__name__])
     tensorboard = TensorBoard(log_dir=log_dir, histogram_freq=0,
                               write_graph=True, write_images=True)
     model.fit(x_train, y_train, epochs=80, batch_size=128,
