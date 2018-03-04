@@ -3,6 +3,7 @@ from __future__ import print_function
 import argparse
 import os
 import sys
+import time
 
 import numpy as np
 import scipy.io as spio
@@ -14,14 +15,27 @@ from keras.optimizers import SGD
 from keras.utils import normalize, np_utils
 
 DATA = 'data4students.mat'
+LOG_DIR = './Logs/'
 
 activation_fns = ['relu', 'relu', 'relu']
-layers = ['900', '300', '100']
-learning_rate = '0.01'
-decay_lr = '0.0'
-momentum = '0.5'
-nesterov = 'True'
+
+layers = [900, 300, 100]
+
+learning_rate = 0.01
+decay_lr = 0.0
+momentum = 0.5
+nesterov = True
+
+lr_scheduler_fn = None
+callbacks = []
+tensorboard = True
+normalize_imgs = True
+max_epochs = 80
+batch_size = 128
 def main():
+    log_dir = LOG_DIR
+    log_dir = init_log_dir(log_dir)
+
     data = spio.loadmat(DATA, squeeze_me=True)
 
     x_train = data['datasetInputs'][0]
@@ -40,50 +54,61 @@ def main():
     x_val = np.array(x_val)
     y_val = np.array(y_val)
 
-    normalize_input(x_train)
-    normalize_input(x_val)
-    normalize_input(x_test)
-
-    lr_method = decay_constant
-
-    print(activation_fns)
-    print(layers)
-    print('learning rate: ' + learning_rate)
-    print('decay rate: ' + decay_lr)
-    print('momentum: ' + momentum)
-    print('Nesterov: ' + nesterov)
-
     model = Sequential()
 
-    model.add(Dense(int(layers[0]), input_dim=900, activation=activation_fns[0]))
+    model.add(Dense(layers[0], input_dim=900, activation=activation_fns[0]))
     for i in range(1, len(layers)):
         # model.add(Dropout(0.5))
-        model.add(Dense(int(layers[i]), activation=activation_fns[i]))
-    model.add(Dense(7, activation="softmax"))
+        model.add(Dense(layers[i], activation=activation_fns[i]))
+    model.add(Dense(7, activation='softmax'))
 
     print("[INFO] compiling model...")
-    sgd = SGD(lr=float(learning_rate), momentum=float(momentum), decay=float(decay_lr), nesterov=bool(nesterov))
+    sgd = SGD(lr=learning_rate, momentum=momentum, decay=decay_lr, nesterov=nesterov)
 
-    model.compile(loss="categorical_crossentropy",
-                            optimizer=sgd, metrics=["accuracy"])
+    model.compile(loss='categorical_crossentropy',
+                            optimizer=sgd, metrics=['accuracy'])
 
     early_stop_callback = keras.callbacks.EarlyStopping(monitor='val_acc',
                             min_delta=0.01, patience=10, verbose=1, mode='max')
-    if lr_method:
-        learning_rate_scheduler = keras.callbacks.LearningRateScheduler(lr_method, verbose=0)
+    append_to_callbacks(early_stop_callback)
 
-    log_dir = "./Logs/" + str.join('_', activation_fns + layers + ['lr', learning_rate, 'dr', decay_lr, 'm', momentum, 'lr', lr_method.__name__])
-    tensorboard = TensorBoard(log_dir=log_dir, histogram_freq=0,
-                              write_graph=True, write_images=True)
-    model.fit(x_train, y_train, epochs=80, batch_size=128,
-    validation_data=(x_val, y_val), callbacks=[tensorboard, early_stop_callback, learning_rate_scheduler])
+    # Comment out next line for default lr_scheduler function
+    lr_scheduler_fn = decay_after_constant
+
+    if lr_scheduler_fn:
+        learning_rate_scheduler = keras.callbacks.LearningRateScheduler(
+                                                    lr_scheduler_fn, verbose=0)
+        append_to_callbacks(learning_rate_scheduler)
+        log_dir = append_params_to_log_dir(log_dir, ['lr_scheduler', lr_scheduler_fn.__name__])
+    else:
+        log_dir = append_params_to_log_dir(log_dir, ['lr_scheduler', lr_scheduler_fn])
+
+    log_dir = check_unique_log_dir(log_dir)
+
+    if tensorboard:
+        tensorboard_cb = TensorBoard(log_dir=log_dir, histogram_freq=0,
+                                  write_graph=True, write_images=True)
+        append_to_callbacks(tensorboard_cb)
+
+    print("-------------------------------------------------------------------")
+    print("Log Directory: " + log_dir)
+    print("-------------------------------------------------------------------")
+
+    if normalize_imgs:
+        print("[INFO] Normalizing Images..")
+        normalize_input(x_train)
+        normalize_input(x_val)
+        normalize_input(x_test)
+
+    model.fit(x_train, y_train, epochs=max_epochs, batch_size=batch_size,
+                        validation_data=(x_val, y_val), callbacks=callbacks)
 
     # show the accuracy on the testing set
     print("[INFO] evaluating on testing set...")
     (loss, accuracy) = model.evaluate(x_test, y_test,
-    batch_size=128, verbose=1)
+                                            batch_size=batch_size, verbose=1)
     print("[INFO] loss={:.4f}, accuracy: {:.4f}%".format(loss,
-    accuracy * 100))
+                                                        accuracy * 100))
 
 def normalize_input(x):
     np.transpose(x)
@@ -96,16 +121,37 @@ def normalize_input(x):
     return x
 
 def decay_after_constant(epochs):
-    denominator = max(epochs,10)
-    return float(learning_rate)*10/denominator
+    denominator = max(epochs, 10)
+    return float(learning_rate) * 10 / denominator
 
 def decay_scaling_factor(epochs):
     return float(learning_rate) * (0.99 ** epochs)
 
 def decay_constant(epochs):
-    denominator = 1 + (epochs/10)
+    denominator = 1 + (epochs / 10)
     return float(learning_rate) / denominator
 
+def append_params_to_log_dir(log_dir, params):
+    log_dir += str.join('_', [str(i) for i in params])
+    log_dir += '_'
+    return log_dir
+
+def init_log_dir(log_dir):
+    log_dir = append_params_to_log_dir(log_dir, activation_fns + layers)
+    log_dir = append_params_to_log_dir(log_dir, ['lr', learning_rate])
+    log_dir = append_params_to_log_dir(log_dir, ['dr', decay_lr])
+    log_dir = append_params_to_log_dir(log_dir, ['m', momentum])
+    log_dir = append_params_to_log_dir(log_dir, ['N', nesterov])
+    return log_dir
+
+def append_to_callbacks(callback):
+    callbacks.append(callback)
+
+def check_unique_log_dir(log_dir):
+    if os.path.isdir(log_dir):
+        print("Log Directory already exists! Appending date to log dir.")
+        log_dir += str(time.time())
+    return log_dir
 
 if __name__ == "__main__":
     main()
