@@ -23,7 +23,7 @@ LOG_DIR = './Logs/'
 
 activation_fns = ['relu', 'relu', 'relu']
 
-layers = [900, 300, 100]
+layers = [1800, 600, 100]
 dropouts = [0.0, 0.1, 0.0]
 regularizer_type = None
 if regularizer_type:
@@ -127,7 +127,7 @@ def main():
     y_true = y_test.argmax(1)
 
     conf_matrix = confusion_matrix(y_true, y_pred)
-    f1_measure = f1_score(y_true, y_pred)
+    f1_measure = f1_score(y_true, y_pred, average='weighted')
     class_report = classification_report(y_true, y_pred)
     print("F1 measure: " + str(f1_measure))
     print("------------------------------")
