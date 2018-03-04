@@ -12,6 +12,7 @@ from keras.callbacks import TensorBoard
 from keras.models import Sequential
 from keras.optimizers import SGD
 from keras.utils import normalize, np_utils
+from keras import regularizers
 
 DATA = 'data4students.mat'
 
@@ -41,23 +42,27 @@ def main():
 
     activation_fns = ['relu', 'relu', 'relu']
     layers = ['900', '300', '100']
-    learning_rate = '0.01'
+    learning_rate = '0.05'
     decay_lr = '0.0'
     momentum = '0.5'
     nesterov = 'True'
+    dropouts = ['0.0', '0.5', '0.0']
     print(activation_fns)
     print(layers)
     print('learning rate: ' + learning_rate)
     print('decay rate: ' + decay_lr)
     print('momentum: ' + momentum)
     print('Nesterov: ' + nesterov)
+    print('Dropouts: ' + str(dropouts))
 
     model = Sequential()
 
     model.add(Dense(int(layers[0]), input_dim=900, activation=activation_fns[0]))
+    #model.add(Dropout(float(0.8)))
     for i in range(1, len(layers)):
-        # model.add(Dropout(0.5))
+        model.add(Dropout(float(dropouts[i])))
         model.add(Dense(int(layers[i]), activation=activation_fns[i]))
+
     model.add(Dense(7, activation="softmax"))
 
     print("[INFO] compiling model...")
@@ -69,7 +74,7 @@ def main():
     early_stop_callback = keras.callbacks.EarlyStopping(monitor='val_acc',
                             min_delta=0.01, patience=10, verbose=1, mode='max')
 
-    log_dir = "./Logs/" + str.join('_', activation_fns + layers + ['lr', learning_rate, 'dr', decay_lr, 'm', momentum])
+    log_dir = "./Logs/" + str.join('_', activation_fns + layers + ['lr', learning_rate, 'dr', decay_lr, 'm', momentum] + ['dropoutss'] + dropouts)
     tensorboard = TensorBoard(log_dir=log_dir, histogram_freq=0,
                               write_graph=True, write_images=True)
     model.fit(x_train, y_train, epochs=80, batch_size=128,
