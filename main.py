@@ -3,7 +3,8 @@ from __future__ import print_function
 import argparse
 import os
 import sys
-import time
+import datetime
+import multiprocessing
 
 import numpy as np
 import scipy.io as spio
@@ -122,13 +123,9 @@ def main():
     print_confusion_matrix(conf_matrix, normalize_cm)
 
 def normalize_input(x):
-    np.transpose(x)
+    pool = multiprocessing.Pool(8)
     for i in range(len(x)):
-        avg = np.average(x[i])
-        for j in range(len(x[i])):
-            if avg != 0:
-                x[i][j] = (x[i][j] - avg) / avg
-    np.transpose(x)
+        x[i] = pool.map(scale,[x[i]])[0]
     return x
 
 def decay_after_constant(epochs):
@@ -161,7 +158,7 @@ def append_to_callbacks(callback):
 def check_unique_log_dir(log_dir):
     if os.path.isdir(log_dir):
         print("Log Directory already exists! Appending date to log dir.")
-        log_dir += str(time.time())
+        log_dir += datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
     return log_dir
 
 def print_confusion_matrix(cm, normalize_cm):
@@ -171,6 +168,13 @@ def print_confusion_matrix(cm, normalize_cm):
     else:
         print('Confusion matrix, without normalization')
     print(cm)
+
+def scale(img):
+    avg = np.average(img)
+    for i in range(len(img)):
+        if avg != 0:
+            img[i] = (img[i] - avg) / avg
+    return img
 
 if __name__ == "__main__":
     main()
