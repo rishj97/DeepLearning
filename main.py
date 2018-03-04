@@ -6,6 +6,7 @@ import sys
 import datetime
 import multiprocessing
 
+from lr_schedule_fns import decay_constant, decay_scaling_factor, decay_after_constant, get_learning_rate, get_lr_param
 import numpy as np
 import scipy.io as spio
 import keras
@@ -23,15 +24,15 @@ activation_fns = ['relu', 'relu', 'relu']
 
 layers = [900, 300, 100]
 
-learning_rate = 0.01
-decay_lr = 0.0
+learning_rate = get_learning_rate()
 momentum = 0.5
+decay_lr = 0.0
 nesterov = True
 early_stop_min_delta = 0.01
-patience = 7
+patience = 10
 
-
-lr_scheduler_fn = None
+lr_param = get_lr_param()
+lr_scheduler_fn = decay_after_constant
 callbacks = []
 tensorboard = True
 normalize_imgs = True
@@ -78,9 +79,6 @@ def main():
     early_stop_callback = keras.callbacks.EarlyStopping(monitor='val_acc',
                             min_delta=early_stop_min_delta, patience=patience, verbose=1, mode='max')
     append_to_callbacks(early_stop_callback)
-
-    # Comment out next line for default lr_scheduler function
-    # lr_scheduler_fn = decay_scaling_factor
 
     if lr_scheduler_fn:
         learning_rate_scheduler = keras.callbacks.LearningRateScheduler(
@@ -131,17 +129,6 @@ def normalize_input(x):
         x[i] = pool.map(scale,[x[i]])[0]
     return x
 
-def decay_after_constant(epochs):
-    denominator = max(epochs, 10)
-    return float(learning_rate) * 10 / denominator
-
-def decay_scaling_factor(epochs):
-    return float(learning_rate) * (0.99 ** epochs)
-
-def decay_constant(epochs):
-    denominator = 1 + (epochs / 10)
-    return float(learning_rate) / denominator
-
 def append_params_to_log_dir(log_dir, params):
     log_dir += str.join('_', [str(i) for i in params])
     log_dir += '_'
@@ -154,6 +141,7 @@ def init_log_dir(log_dir):
     log_dir = append_params_to_log_dir(log_dir, ['m', momentum])
     log_dir = append_params_to_log_dir(log_dir, ['nest', nesterov])
     log_dir = append_params_to_log_dir(log_dir, ['patience', patience])
+    log_dir = append_params_to_log_dir(log_dir, ['lr_param', lr_param])
     return log_dir
 
 def append_to_callbacks(callback):
