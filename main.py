@@ -27,6 +27,9 @@ learning_rate = 0.01
 decay_lr = 0.0
 momentum = 0.5
 nesterov = True
+early_stop_min_delta = 0.01
+patience = 7
+
 
 lr_scheduler_fn = None
 callbacks = []
@@ -73,11 +76,11 @@ def main():
                             optimizer=sgd, metrics=['accuracy'])
 
     early_stop_callback = keras.callbacks.EarlyStopping(monitor='val_acc',
-                            min_delta=0.01, patience=5, verbose=1, mode='max')
+                            min_delta=early_stop_min_delta, patience=patience, verbose=1, mode='max')
     append_to_callbacks(early_stop_callback)
 
     # Comment out next line for default lr_scheduler function
-    lr_scheduler_fn = decay_after_constant
+    # lr_scheduler_fn = decay_scaling_factor
 
     if lr_scheduler_fn:
         learning_rate_scheduler = keras.callbacks.LearningRateScheduler(
@@ -149,7 +152,8 @@ def init_log_dir(log_dir):
     log_dir = append_params_to_log_dir(log_dir, ['lr', learning_rate])
     log_dir = append_params_to_log_dir(log_dir, ['dr', decay_lr])
     log_dir = append_params_to_log_dir(log_dir, ['m', momentum])
-    log_dir = append_params_to_log_dir(log_dir, ['N', nesterov])
+    log_dir = append_params_to_log_dir(log_dir, ['nest', nesterov])
+    log_dir = append_params_to_log_dir(log_dir, ['patience', patience])
     return log_dir
 
 def append_to_callbacks(callback):
