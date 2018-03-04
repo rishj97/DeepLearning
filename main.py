@@ -13,6 +13,7 @@ from keras.callbacks import TensorBoard
 from keras.models import Sequential
 from keras.optimizers import SGD
 from keras.utils import normalize, np_utils
+from sklearn.metrics import confusion_matrix
 
 DATA = 'data4students.mat'
 LOG_DIR = './Logs/'
@@ -32,6 +33,8 @@ tensorboard = True
 normalize_imgs = True
 max_epochs = 80
 batch_size = 128
+
+normalize_cm = False
 def main():
     log_dir = LOG_DIR
     log_dir = init_log_dir(log_dir)
@@ -69,7 +72,7 @@ def main():
                             optimizer=sgd, metrics=['accuracy'])
 
     early_stop_callback = keras.callbacks.EarlyStopping(monitor='val_acc',
-                            min_delta=0.01, patience=10, verbose=1, mode='max')
+                            min_delta=0.01, patience=5, verbose=1, mode='max')
     append_to_callbacks(early_stop_callback)
 
     # Comment out next line for default lr_scheduler function
@@ -109,6 +112,14 @@ def main():
                                             batch_size=batch_size, verbose=1)
     print("[INFO] loss={:.4f}, accuracy: {:.4f}%".format(loss,
                                                         accuracy * 100))
+    y_pred = model.predict(x_test, batch_size=batch_size, verbose=1)
+
+    y_pred = y_pred.argmax(1)
+    y_true = y_test.argmax(1)
+
+    conf_matrix = confusion_matrix(y_true, y_pred)
+
+    print_confusion_matrix(conf_matrix, normalize_cm)
 
 def normalize_input(x):
     np.transpose(x)
@@ -152,6 +163,14 @@ def check_unique_log_dir(log_dir):
         print("Log Directory already exists! Appending date to log dir.")
         log_dir += str(time.time())
     return log_dir
+
+def print_confusion_matrix(cm, normalize_cm):
+    if normalize_cm:
+        cm = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
+        print("Normalized confusion matrix")
+    else:
+        print('Confusion matrix, without normalization')
+    print(cm)
 
 if __name__ == "__main__":
     main()
