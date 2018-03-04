@@ -15,7 +15,8 @@ from keras.callbacks import TensorBoard
 from keras.models import Sequential
 from keras.optimizers import SGD
 from keras.utils import normalize, np_utils
-from sklearn.metrics import confusion_matrix
+from keras import regularizers
+from sklearn.metrics import confusion_matrix, f1_score, classification_report
 
 DATA = 'data4students.mat'
 LOG_DIR = './Logs/'
@@ -24,7 +25,11 @@ activation_fns = ['relu', 'relu', 'relu']
 
 layers = [900, 300, 100]
 dropouts = [0.0, 0.1, 0.0]
-
+regularizer_type = None
+if regularizer_type:
+    regularizer = regularizers.l2(0.0007)
+else:
+    regularizer = None
 learning_rate = get_learning_rate()
 momentum = 0.5
 decay_lr = 0.0
@@ -69,7 +74,7 @@ def main():
     model.add(Dropout(dropouts[0]))
     for i in range(1, len(layers)):
         model.add(Dropout(dropouts[i]))
-        model.add(Dense(layers[i], activation=activation_fns[i]))
+        model.add(Dense(layers[i], kernel_regularizer=regularizer, activation=activation_fns[i]))
     model.add(Dense(7, activation='softmax'))
 
     print("[INFO] compiling model...")
@@ -122,7 +127,13 @@ def main():
     y_true = y_test.argmax(1)
 
     conf_matrix = confusion_matrix(y_true, y_pred)
-
+    f1_measure = f1_score(y_true, y_pred)
+    class_report = classification_report(y_true, y_pred)
+    print("F1 measure: " + str(f1_measure))
+    print("------------------------------")
+    print("Classification report: ")
+    print(str(class_report))
+    print("------------------------------")
     print_confusion_matrix(conf_matrix, normalize_cm)
 
 def normalize_input(x):
@@ -144,7 +155,8 @@ def init_log_dir(log_dir):
     log_dir = append_params_to_log_dir(log_dir, ['nest', nesterov])
     log_dir = append_params_to_log_dir(log_dir, ['patience', patience])
     log_dir = append_params_to_log_dir(log_dir, ['lr_param', lr_param])
-    log_dir = append_params_to_log_dir(log_dir, ['dropouts',] + dropouts)
+    log_dir = append_params_to_log_dir(log_dir, ['dropouts'] + dropouts)
+    log_dir = append_params_to_log_dir(log_dir, ['reg', regularizer_type])
     return log_dir
 
 def append_to_callbacks(callback):
@@ -170,6 +182,6 @@ def scale(img):
         if avg != 0:
             img[i] = (img[i] - avg) / avg
     return img
-
 if __name__ == "__main__":
+
     main()
