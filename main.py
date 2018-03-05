@@ -35,7 +35,7 @@ momentum = 0.5
 decay_lr = 0.0
 nesterov = True
 early_stop_min_delta = 0.01
-patience = 20
+patience = 10
 
 lr_param = get_lr_param()
 lr_scheduler_fn = decay_scaling_factor
@@ -177,11 +177,23 @@ def print_confusion_matrix(cm, normalize_cm):
     print(cm)
 
 def scale(img):
+    img = image_histogram_equalization(img)
     avg = np.average(img)
-    for i in range(len(img)):
-        if avg != 0:
-            img[i] = (img[i] - avg) / avg
+    if (avg) != 0:
+        for i in range(len(img)):
+            img[i] = (img[i] - avg) / (avg)
+    else: print(len(img))
     return img
+
+def image_histogram_equalization(image, n_bins=256):
+    # get image histogram
+    histogram, bins = np.histogram(image, n_bins, normed=True)
+    cdf = histogram.cumsum() # cumulative distribution function
+    cdf = 255 * cdf / cdf[-1] # normalize
+
+    # use linear interpolation of cdf to find new pixel values
+    return np.interp(image.flatten(), bins[:-1], cdf)
+
 if __name__ == "__main__":
 
     main()
