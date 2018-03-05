@@ -21,10 +21,10 @@ from sklearn.metrics import confusion_matrix, f1_score, classification_report
 DATA = 'data4students.mat'
 LOG_DIR = './Logs/'
 
-activation_fns = ['relu', 'relu', 'relu']
+activation_fns = ['tanh', 'relu', 'relu']
 
 layers = [1800, 600, 100]
-dropouts = [0.0, 0.1, 0.0]
+dropouts = [0.0, 0.2, 0.0]
 regularizer_type = None
 if regularizer_type:
     regularizer = regularizers.l2(0.0007)
