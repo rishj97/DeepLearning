@@ -17,10 +17,12 @@ plt.title(str(sys.argv[1]))
 plt.xlabel('Epoch number')
 plt.ylabel(str(sys.argv[2]))
 colors = ['r', 'b', 'g', 'c', 'm', 'y']
-for i in range(3, len(sys.argv)):
-    data = np.genfromtxt('csv_files/' + sys.argv[i], delimiter=',', names=True)
-    i += 1
-    plt.plot(val_data['Step'], data['Value'], c=colors[i-3], label=str(sys.argv[i]))
+i = 3
+while(i < len(sys.argv)):
+    print(i)
+    data = np.genfromtxt(sys.argv[i], delimiter=',', names=True)
+    plt.plot(data['Step'], data['Value'], c=colors[i-3], label=str(sys.argv[i + 1]))
+    i += 2
 
 plt.legend()
-plt.savefig(sys.argv[1] + datetime.datetime.now().strftime("%Y-%m-%d %H:%M") + '.png')
+plt.savefig(str(sys.argv[1]) + str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M")) + '.png')
