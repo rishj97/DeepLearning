@@ -21,10 +21,10 @@ from sklearn.metrics import confusion_matrix, f1_score, classification_report
 DATA = 'data4students.mat'
 LOG_DIR = './Logs/'
 
-activation_fns = ['tanh', 'relu', 'relu']
+activation_fns = ['relu', 'relu', 'relu']
 
-layers = [1800, 600, 100]
-dropouts = [0.0, 0.2, 0.0]
+layers = [900, 300, 100]
+dropouts = [0.0, 0.0, 0.0]
 regularizer_type = None
 if regularizer_type:
     regularizer = regularizers.l2(0.0007)
@@ -33,12 +33,12 @@ else:
 learning_rate = get_learning_rate()
 momentum = 0.5
 decay_lr = 0.0
-nesterov = True
-early_stop_min_delta = 0.01
+nesterov = False
+early_stop_min_delta = 0.01  # signifies 1 percent
 patience = 10
 
+lr_scheduler_fn = None
 lr_param = get_lr_param()
-lr_scheduler_fn = decay_scaling_factor
 callbacks = []
 tensorboard = True
 normalize_imgs = True
@@ -92,6 +92,7 @@ def main():
                                                     lr_scheduler_fn, verbose=0)
         append_to_callbacks(learning_rate_scheduler)
         log_dir = append_params_to_log_dir(log_dir, ['lr_scheduler', lr_scheduler_fn.__name__])
+        log_dir = append_params_to_log_dir(log_dir, ['lr_param', lr_param])
     else:
         log_dir = append_params_to_log_dir(log_dir, ['lr_scheduler', lr_scheduler_fn])
 
@@ -154,7 +155,6 @@ def init_log_dir(log_dir):
     log_dir = append_params_to_log_dir(log_dir, ['m', momentum])
     log_dir = append_params_to_log_dir(log_dir, ['nest', nesterov])
     log_dir = append_params_to_log_dir(log_dir, ['patience', patience])
-    log_dir = append_params_to_log_dir(log_dir, ['lr_param', lr_param])
     log_dir = append_params_to_log_dir(log_dir, ['dropouts'] + dropouts)
     log_dir = append_params_to_log_dir(log_dir, ['reg', regularizer_type])
     return log_dir
