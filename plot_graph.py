@@ -28,7 +28,7 @@ while(i < len(sys.argv)):
     data = np.genfromtxt(sys.argv[i], delimiter=',', names=True)
     x = np.array(data['Step'])
     y = np.array(data['Value'])
-    y_smooth = savgol_filter(y, 7, 2)
+    y_smooth = savgol_filter(y, 9, 2)
     plt.plot(x, y_smooth, c=colors[c], label=str(sys.argv[i + 1]))
     c += 1
     i += 2

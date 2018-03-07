@@ -1,4 +1,4 @@
-learning_rate = 0.01
+learning_rate = 0.009
 lr_param = 0.97
 def decay_after_constant(epochs):
     denominator = max(epochs, lr_param)
