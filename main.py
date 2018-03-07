@@ -24,7 +24,7 @@ LOG_DIR = './Logs/'
 activation_fns = ['relu', 'relu', 'relu']
 
 layers = [900, 300, 100]
-dropouts = [0.0, 0.0, 0.0]
+dropouts = [0.0, 0.1, 0.1]
 regularizer_type = None
 if regularizer_type:
     regularizer = regularizers.l2(0.0007)
@@ -33,11 +33,11 @@ else:
 learning_rate = get_learning_rate()
 momentum = 0.5
 decay_lr = 0.0
-nesterov = False
+nesterov = True
 early_stop_min_delta = 0.01  # signifies 1 percent
 patience = 10
 
-lr_scheduler_fn = None
+lr_scheduler_fn = decay_scaling_factor
 lr_param = get_lr_param()
 callbacks = []
 tensorboard = True
