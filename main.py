@@ -21,17 +21,17 @@ from sklearn.metrics import confusion_matrix, f1_score, classification_report
 DATA = 'data4students.mat'
 LOG_DIR = './Logs/'
 
-activation_fns = ['relu', 'relu', 'relu']
+activation_fns = ['tanh', 'relu', 'relu']
 
-layers = [900, 300, 100]
-dropouts = [0.0, 0.1, 0.1]
+layers = [1800, 600, 100]
+dropouts = [0.1, 0.2, 0.2]
 regularizer_type = None
 if regularizer_type:
     regularizer = regularizers.l2(0.0007)
 else:
     regularizer = None
 learning_rate = get_learning_rate()
-momentum = 0.5
+momentum = 0.7
 decay_lr = 0.0
 nesterov = True
 early_stop_min_delta = 0.01  # signifies 1 percent
