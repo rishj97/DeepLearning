@@ -109,9 +109,9 @@ def main():
 
     if normalize_imgs:
         print("[INFO] Normalizing Images..")
-        normalize_input(x_train)
-        normalize_input(x_val)
-        normalize_input(x_test)
+        x_train = normalize_input(x_train)
+        x_val = normalize_input(x_val)
+        x_test = normalize_input(x_test)
 
     model.fit(x_train, y_train, epochs=max_epochs, batch_size=batch_size,
                         validation_data=(x_val, y_val), callbacks=callbacks)
