@@ -8,7 +8,7 @@ def main():
     model = load_model(sys.argv[1])
     x_test = spio.loadmat(sys.argv[2], squeeze_me=True)
 
-    normalize_input(x_test)
+    x_test = normalize_input(np.array(x_test))
     predicted_labels = simulateNN(model, x_test)
     pickle.dump(predicted_labels, open('predicted_labels' + '.p', 'wb'))
 
