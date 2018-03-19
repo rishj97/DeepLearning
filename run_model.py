@@ -13,7 +13,7 @@ def main():
     pickle.dump(predicted_labels, open('predicted_labels' + '.p', 'wb'))
 
     # filename = 'predicted_labels.p'
-    # loaded_y_pred = load_y_pred(filename)                                        accuracy * 100))
+    # loaded_y_pred = load_y_pred(filename) accuracy * 100))
 
 def simulateNN(model, x_test):
     y_pred = model.predict(x_test, batch_size=128, verbose=1)
